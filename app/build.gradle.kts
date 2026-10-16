@@ -7,6 +7,11 @@ plugins {
 android {
     namespace = "com.lostlink.app"
     compileSdk = 35
+compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 
     defaultConfig {
         applicationId = "com.lostlink.app"
@@ -19,6 +24,9 @@ android {
     buildFeatures {
         compose = true
     }
+}
+kotlin {
+    jvmToolchain(17)
 }
 
 dependencies {

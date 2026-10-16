@@ -1,14 +1,36 @@
+
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- GPS location -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Bluetooth for Android 12 and newer -->
     <uses-permission
-        android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    android:name="android.permission.BLUETOOTH_SCAN" />
 
     <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION" />
+        android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADVERTISE" />
+
+    <!-- Legacy Bluetooth permissions for Android 11 and older -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
 
     <uses-feature
         android:name="android.hardware.location.gps"
+        android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
         android:required="false" />
 
     <application
@@ -27,4 +49,6 @@
 
         </activity>
     </application>
+
 </manifest>
+

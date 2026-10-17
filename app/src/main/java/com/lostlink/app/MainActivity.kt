@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var locationManager: LocationManager
     private var activeListener: LocationListener? = null
+private lateinit var bluetoothDiscovery: BluetoothDiscovery
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
         locationManager =
             getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
+bluetoothDiscovery = BluetoothDiscovery(this)
         val prefs = getSharedPreferences("lostlink", MODE_PRIVATE)
 
         setContent {
@@ -68,6 +70,29 @@ class MainActivity : ComponentActivity() {
             var history by remember {
                 mutableStateOf(loadHistory(prefs))
             }
+val bluetoothPermissions = remember {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_ADVERTISE,
+            Manifest.permission.BLUETOOTH_CONNECT
+        )
+    } else {
+        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+}
+val bluetoothPermissionLauncher =
+    rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        val granted = bluetoothDiscovery.hasPermissions()
+
+        if (granted) {
+            status = "Bluetooth permissions granted. Choose an action."
+        } else {
+            status = "Bluetooth permissions are required for discovery."
+        }
+    }
 
             val permissionLauncher =
                 rememberLauncherForActivityResult(
@@ -198,6 +223,71 @@ class MainActivity : ComponentActivity() {
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
+                            }
+                        }
+
+                                    item {
+                            Text(
+                                "Nearby Bluetooth Discovery",
+                                fontSize = 21.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DarkPurple
+                            )
+
+                            Text(
+                                "Discover other LostLink phones nearby.",
+                                fontSize = 13.sp,
+                                color = Muted
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = {
+                                    if (bluetoothDiscovery.hasPermissions()) {
+                                        bluetoothDiscovery.startAdvertising {
+                                            status = it
+                                        }
+                                    } else {
+                                        bluetoothPermissionLauncher.launch(
+                                            bluetoothPermissions
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Text("Broadcast this phone")
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    if (bluetoothDiscovery.hasPermissions()) {
+                                        bluetoothDiscovery.startScanning(
+                                            onFound = { status = it },
+                                            onStatus = { status = it }
+                                        )
+                                    } else {
+                                        bluetoothPermissionLauncher.launch(
+                                            bluetoothPermissions
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Text("Find nearby LostLink phones")
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    bluetoothDiscovery.stop()
+                                    status = "Bluetooth discovery stopped."
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Text("Stop Bluetooth")
                             }
                         }
 
@@ -568,6 +658,12 @@ class MainActivity : ComponentActivity() {
             activeListener = null
             onStatus("Could not start GPS: ${e.message}")
         }
+    }
+    override fun onStop() {
+        if (::bluetoothDiscovery.isInitialized) {
+            bluetoothDiscovery.stop()
+        }
+        super.onStop()
     }
 
     override fun onDestroy() {
